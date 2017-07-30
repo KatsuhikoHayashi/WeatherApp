@@ -23,17 +23,19 @@ struct Weather {
     var minTemperatureCcelsius: String
     var maxTemperatureCcelsius: String
     var url: String
+    var img: UIImage
     var title: String
     var width: Int
     var height: Int
     
-    init(dateLabel: String, telop: String, date: String, minTemperatureCcelsius: String, maxTemperatureCcelsius: String, url: String, title: String, width: Int, height: Int) {
+    init(dateLabel: String, telop: String, date: String, minTemperatureCcelsius: String, maxTemperatureCcelsius: String, url: String, img: UIImage, title: String, width: Int, height: Int) {
         self.dateLabel = dateLabel
         self.telop = telop
         self.date = date
         self.minTemperatureCcelsius = minTemperatureCcelsius
         self.maxTemperatureCcelsius = maxTemperatureCcelsius
         self.url = url
+        self.img = img
         self.title = title
         self.width = width
         self.height = height
@@ -41,11 +43,31 @@ struct Weather {
 }
 var weather = [Weather]()
 
-class ViewController: UIViewController {
-
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+    
+    let statusBarHeight = UIApplication.shared.statusBarFrame.height
+    let tableView = UITableView()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        // UITableView を作成
+        // サイズと位置調整
+        tableView.frame = CGRect(
+            x: 0,
+            y: statusBarHeight,
+            width: self.view.frame.width,
+            height: self.view.frame.height - statusBarHeight
+        )
+        
+        // Delegate設定
+        tableView.delegate = self
+        
+        // DataSource設定
+        tableView.dataSource = self
+        
+        // 画面に UITableView を追加
+        self.view.addSubview(tableView)
         
         let areaCode = "130010" // 東京エリア
         let urlWeather = "http://weather.livedoor.com/forecast/webservice/json/v1?city=" + areaCode
@@ -107,13 +129,16 @@ class ViewController: UIViewController {
                         let width = (image["width"] as? Int)!
                         let height = (image["height"] as? Int)!
                         
-                        weather.append(Weather(dateLabel: dateLabel, telop: telop, date: date, minTemperatureCcelsius: minTemperatureCcelsius, maxTemperatureCcelsius: maxTemperatureCcelsius, url: url, title: title, width: width, height: height))
+                        let imgUrl = URL(string: url)
+                        let imgData = try? Data(contentsOf: imgUrl!)
+                        let img = UIImage(data: imgData!)
+                        
+                        weather.append(Weather(dateLabel: dateLabel, telop: telop, date: date, minTemperatureCcelsius: minTemperatureCcelsius, maxTemperatureCcelsius: maxTemperatureCcelsius, url: url, img: img!, title: title, width: width, height: height))
                         
                     }
-                    for w in weather {
-                        print("\(w.dateLabel):\(w.telop):\(w.telop):\(w.date):\(w.minTemperatureCcelsius):\(w.maxTemperatureCcelsius):\(w.url)")
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
                     }
-
                     
                 } catch {
                     print ("json error")
@@ -123,12 +148,32 @@ class ViewController: UIViewController {
             task.resume()
         }
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-
-
+    // MARK: - UITableViewDataSource
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "cell")
+        // セルの中身を設定
+        cell.accessoryType = .none
+        cell.textLabel?.text = "\(weather[indexPath.row].dateLabel)の天気：\(weather[indexPath.row].telop)"
+        cell.detailTextLabel?.text = "最低気温\(weather[indexPath.row].minTemperatureCcelsius)度  最高気温\(weather[indexPath.row].maxTemperatureCcelsius)度"
+        cell.imageView!.image = weather[indexPath.row].img
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        // セルの数を設定
+        return weather.count
+    }
+    
+    // MARK: - UITableViewDelegate
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        // セルの高さを設定
+        return 64
+    }
+    
 }
 
