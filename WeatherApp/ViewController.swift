@@ -60,6 +60,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             height: self.view.frame.height - statusBarHeight
         )
         
+        tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.estimatedRowHeight = 64
+
         // Delegate設定
         tableView.delegate = self
         
@@ -157,22 +160,38 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "cell")
         // セルの中身を設定
-        cell.accessoryType = .none
-        cell.textLabel?.text = "\(weather[indexPath.row].dateLabel)の天気：\(weather[indexPath.row].telop)"
-        cell.detailTextLabel?.text = "最低気温\(weather[indexPath.row].minTemperatureCcelsius)度  最高気温\(weather[indexPath.row].maxTemperatureCcelsius)度"
-        cell.imageView!.image = weather[indexPath.row].img
+        // セルの中身を設定
+        if indexPath.row == 0 {
+            cell.textLabel?.text = "\(prefecture)の天気"
+            cell.textLabel?.textColor = .white
+            cell.detailTextLabel?.text = publicTime
+            cell.detailTextLabel?.textColor = .white
+            cell.contentView.backgroundColor = UIColor.black
+            
+        } else if indexPath.row == weather.count + 1 {
+            cell.textLabel?.text = descriptionText
+            cell.textLabel?.numberOfLines = 0
+            cell.textLabel?.font = UIFont.systemFont(ofSize: 14);
+            cell.detailTextLabel?.text = descriptionPublicTime
+            
+        } else {
+            let row = indexPath.row - 1
+            cell.textLabel?.text = "\(weather[row].dateLabel)の天気：\(weather[row].telop)"
+            cell.detailTextLabel?.text = "最低気温\(weather[row].minTemperatureCcelsius)度  最高気温\(weather[row].maxTemperatureCcelsius)度"
+            cell.imageView!.image = weather[row].img
+        }
         return cell
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // セルの数を設定
-        return weather.count
-    }
-    
-    // MARK: - UITableViewDelegate
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        // セルの高さを設定
-        return 64
+        var ret:Int
+        if weather.count == 0 {
+            ret = 0
+        }else{
+            ret = weather.count + 2
+        }
+        return ret
     }
     
 }
